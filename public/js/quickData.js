@@ -4,107 +4,174 @@
 
     // Define the schema
     myConnector.getSchema = function(schemaCallback) {
-        const jobCols = [{
+        var jobCols = [{
                 id: "job_no",
-                datatype: tableau.dataTypeEnum.string,
+                dataType: tableau.dataTypeEnum.string,
                 alias: "Job Number"
             },
             {
                 id: "customers",
-                datatype: tableau.dataTypeEnum.string,
+                dataType: tableau.dataTypeEnum.string,
                 alias: "Customer"
             },
             {
                 id: "jobsource",
-                datatype: tableau.dataTypeEnum.string,
+                dataType: tableau.dataTypeEnum.string,
                 alias: "Job Origin"
             },
             {
                 id: "shipper",
-                datatype: tableau.dataTypeEnum.string,
+                dataType: tableau.dataTypeEnum.string,
                 alias: "Shipper"
             },
             {
                 id: "consignee",
-                datatype: tableau.dataTypeEnum.string,
+                dataType: tableau.dataTypeEnum.string,
                 alias: "Consignee"
             },
             {
                 id: "status",
-                datatype: tableau.dataTypeEnum.string,
+                dataType: tableau.dataTypeEnum.string,
                 alias: "Status"
             },
             {
                 id: "org",
-                datatype: tableau.dataTypeEnum.string,
+                dataType: tableau.dataTypeEnum.string,
                 alias: "Origin"
             },
             {
                 id: "des",
-                datatype: tableau.dataTypeEnum.string,
+                dataType: tableau.dataTypeEnum.string,
                 alias: "Destination"
             },
             {
                 id: "bolno",
-                datatype: tableau.dataTypeEnum.string,
+                dataType: tableau.dataTypeEnum.string,
                 alias: "BOL No"
             },
             {
                 id: "shippername",
-                datatype: tableau.dataTypeEnum.string,
+                dataType: tableau.dataTypeEnum.string,
                 alias: "Shipper Name"
             },
             {
                 id: "shippercity",
-                datatype: tableau.dataTypeEnum.string,
+                dataType: tableau.dataTypeEnum.string,
                 alias: "Shipper City"
             },
             {
                 id: "shippercountrycode",
-                datatype: tableau.dataTypeEnum.string,
+                dataType: tableau.dataTypeEnum.string,
                 alias: "Shipper Country"
             },
             {
                 id: "consigneename",
-                datatype: tableau.dataTypeEnum.string,
+                dataType: tableau.dataTypeEnum.string,
                 alias: "Consignee Name"
             },
             {
                 id: "consigneecity",
-                datatype: tableau.dataTypeEnum.string,
+                dataType: tableau.dataTypeEnum.string,
                 alias: "Consignee City"
             },
             {
                 id: "consigneecountrycode",
-                datatype: tableau.dataTypeEnum.string,
+                dataType: tableau.dataTypeEnum.string,
                 alias: "Consignee Country"
             }
         ];
 
-        let quickJobSchema = {
-            id: "QICJOB",
+        var qicJobsTable = {
+            id: "qicJobs",
             alias: "Quick Shipments",
             columns: jobCols
         };
-        schemaCallback([quickJobSchema]);
+
+        var flightCols = [{
+                id: "job_no",
+                dataType: tableau.dataTypeEnum.string,
+                alias: "Job Number"
+            },
+            {
+                id: "flight_pos",
+                dataType: tableau.dataTypeEnum.int,
+            },
+            {
+                id: "flightairline",
+                dataType: tableau.dataTypeEnum.string,
+                alias: "Flight Airline"
+            },
+            {
+                id: "flightnumber",
+                dataType: tableau.dataTypeEnum.string,
+                alias: "Flight Number"
+            },
+            {
+                id: "flighttype",
+                dataType: tableau.dataTypeEnum.string,
+                alias: "Flight Type"
+            },
+            {
+                id: "flight_arrival_time_utc",
+                dataType: tableau.dataTypeEnum.string,
+                alias: "Flight Arrival"
+            }
+        ];
+
+        var qicFlightsTable = {
+            id: "qicFlights",
+            alias: "Quick Flights",
+            columns: flightCols
+        };
+
+
+        schemaCallback([qicJobsTable, qicFlightsTable]);
     };
 
     // Download the data
     myConnector.getData = function(table, doneCallback) {
-        const newLocal = "http://mvis00.quickintl.com:9193/TEST_QUICKONLINE/TableauJobsfile?start=1&max=10";
+        const newLocal = "http://mvis00.quickintl.com:9193/TEST_QUICKONLINE/TableauJobsfile?start=1&max=1000";
         $.getJSON(newLocal, function(resp) {
-            var feat = resp.jobsfile,
+            var feat = resp.TableauJobsfile,
                 tableData = [];
 
             // Iterate over the JSON object
-            for (var i = 0, len = feat.length; i < len; i++) {
-                tableData.push({
-                    "job_no": feat[i].job_no,
-                    "order_type": feat[i].order_type,
-                    "customer": feat[i].customer,
-                    "shipper": feat[i].shipper,
-                    "consignee": feat[i].consignee
-                });
+            if (table.tableInfo.id == "qicJobs") {
+                for (var i = 0, len = feat.length; i < len; i++) {
+                    tableData.push({
+                        "job_no": feat[i].job_no,
+                        "customers": feat[i].customers,
+                        "jobsource": feat[i].jobsource,
+                        "shipper": feat[i].shipper,
+                        "consignee": feat[i].consignee,
+                        "status": feat[i].status,
+                        "org": feat[i].org,
+                        "des": feat[i].des,
+                        "bolno": feat[i].bolno,
+                        "shippername": feat[i].shippername,
+                        "shippercity": feat[i].shippercity,
+                        "shippercountrycode": feat[i].shippercountrycode,
+                        "consigneename": feat[i].consigneename,
+                        "consigneecity": feat[i].consigneecity,
+                        "consigneecountrycode": feat[i].consigneecountrycode
+                    });
+                }
+            }
+
+            if (table.tableInfo.id == "qicFlights") {
+                for (var i = 0, len = feat.length; i < len; i++) {
+                    var flt = feat[i].flights2_list.Flights2;
+                    for (var j = 0, flen = flt.length; j < flen; j++) {
+                        tableData.push({
+                            "job_no": feat[i].job_no,
+                            "flight_pos": j + 1,
+                            "flightairline": flt[j].flightairline,
+                            "flightnumber": feat[i].flights2_list.Flights2[j].flightnumber,
+                            "flighttype": feat[i].flights2_list.Flights2[j].flighttype,
+                            "flight_arrival_time_utc": feat[i].flights2_list.Flights2[j].flight_arrival_time_utc
+                        });
+                    }
+                }
             }
 
             table.appendRows(tableData);
